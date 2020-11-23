@@ -1,0 +1,65 @@
+server:
+  port: 8080 # 后期该微服务多实例，端⼝从8080递增（10个以内）
+spring:
+  application:
+    name: lagou-service-user
+  datasource:
+    driver-class-name: com.mysql.jdbc.Driver
+    url: jdbc:mysql://127.0.0.1:3306/test?useUnicode=true&characterEncoding=utf8
+    username: root
+    password: 123456
+  jpa:
+    database: MySQL
+    show-sql: true
+    hibernate:
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl #避免将驼峰命名转换为下划线命名
+eureka:
+  client:
+    serviceUrl: # eureka server的路径
+      defaultZone: http://localhost:8761/eureka/,http://localhost:8762/eureka/ #把 eureka 集群中的所有 url 都填写了进来，也可以只写⼀台，因为各个eureka server 可以同步注册表
+  instance: #使⽤ip注册，否则会使⽤主机名注册了（此处考虑到对⽼版本的兼容，新版本经过实验都是ip）
+    prefer-ip-address: true #⾃定义实例显示格式，加上版本号，便于多版本管理，注意是ip-address，早期版本是ipAddress
+    instance-id:  ${spring.cloud.client.ip-address}:${spring.application.name}:${server.port}:@project.version@
+lagou-service-resume:
+  ribbon:
+    NFLoadBalancerRuleClassName: com.netflix.loadbalancer.RandomRule #负载策略调整
+  #请求连接超时时间
+    ConnectTimeout: 5000
+  #请求处理超时时间
+    ReadTimeout: 5000
+  #对所有操作都进⾏重试
+    OkToRetryOnAllOperations: true
+  ####根据如上配置，当访问到故障请求的时候，它会再尝试访问⼀次当前实例（次数由MaxAutoRetries配置），
+  ####如果不⾏，就换⼀个实例进⾏访问，如果还不⾏，再换⼀次实例访问（更换次数由MaxAutoRetriesNextServer配置），
+####如果依然不⾏，返回失败信息。
+    MaxAutoRetries: 0 #对当前选中实例重试次数，不包括第⼀次调⽤
+    MaxAutoRetriesNextServer: 0 #切换实例的重试次数
+# 开启Feign的熔断功能
+feign:
+  hystrix:
+    enabled: true
+logging:
+  level:
+  # Feign⽇志只会对⽇志级别为debug的做出响应
+    com.lagou.edu.feignClient.ResumeFeignClient: debug
+  compression:
+    request:
+    enabled: true # 开启请求压缩
+    mime-types: text/html,application/xml,application/json # 设置压缩的数据类型，此处也是默认值
+    min-request-size: 2048 # 设置触发压缩的⼤⼩下限，此处也是默认值
+  response:
+    enabled: true # 开启响应压缩
+
+hystrix:
+  command:
+    default:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 15000  #Hystrix的超时时⻓设置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"

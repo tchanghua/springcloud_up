@@ -1,0 +1,33 @@
+server:
+  port: 9006 # 后期该微服务多实例，端⼝从9006递增（10个以内）
+eureka:
+  client:
+    serviceUrl: # eureka server的路径
+      defaultZone: http://localhost:8761/eureka/,http://localhost:8762/eureka/ #把 eureka 集群中的所有 url 都填写了进来，也可以只写⼀台，因为各个eureka server 可以同步注册表
+  instance: #使⽤ip注册，否则会使⽤主机名注册了（此处考虑到对⽼版本的兼容，新版本经过实验都是ip）
+    prefer-ip-address: true #⾃定义实例显示格式，加上版本号，便于多版本管理，注意是ip-address，早期版本是ipAddress
+    instance-id:  ${spring.cloud.client.ip-address}:${spring.application.name}:${server.port}:@project.version@
+spring:
+  application:
+    name: lagou-config-server
+  cloud:
+    config:
+      server:
+        git:
+          uri: https://github.com/tchanghua/springcloud_up/springcloud_config.git #配置git服务地址
+          username: 18310684895@163.com #配置git用户名
+          password: changhua13 #配置git密码 替换为自己的码云账号及密码
+          search-paths:
+            - springcloud_config
+      # 读取分支
+      label: master
+  rabbitmq:
+    host: 127.0.0.1
+    port: 5672
+    username: guest
+    password: guest
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
